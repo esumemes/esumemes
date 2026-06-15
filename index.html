@@ -56,7 +56,7 @@
     <!-- BARRA LATERAL (CHATS Y SUBS) -->
     <div class="barra-lateral" id="barraLateral">
         <div class="panel-control">
-            <!-- Botones de Suscripción Corregidos -->
+            <!-- Botones de Suscripción -->
             <div class="fila-subs">
                 <a href="https://www.twitch.tv/subs/esumemes" target="_blank" class="btn-sub sub-twitch">⭐ Sub Twitch</a>
                 <a href="https://kick.com/kimowo/subscribe" target="_blank" class="btn-sub sub-kick">💚 Sub Kick</a>
@@ -71,9 +71,9 @@
         
         <!-- Área de los Chats -->
         <div class="contenedor-chats">
-            <!-- Chat de Twitch en modo oscuro -->
+            <!-- Chat de Twitch con doble refuerzo oscuro (theme=dark y darkpopout) -->
             <iframe id="chatTwitch" class="chat-iframe chat-visible"
-                src="https://www.twitch.tv/embed/esumemes/chat?parent=esumemes.github.io&theme=dark"
+                src="https://www.twitch.tv/embed/esumemes/chat?parent=esumemes.github.io&theme=dark&darkpopout"
                 height="100%" width="100%">
             </iframe>
             
@@ -105,7 +105,6 @@
             }
         }
 
-        // Ocultar o mostrar barra de chats completa
         function toggleBarra() {
             const barra = document.getElementById('barraLateral');
             barra.classList.toggle('barra-oculta');
