@@ -45,7 +45,6 @@
 
     <!-- REPRODUCTOR DE VIDEO (KICK) -->
     <div class="contenedor-video">
-        <!-- Botón para ocultar o mostrar todo el panel de la derecha -->
         <button class="btn-toggle-barra" onclick="toggleBarra()">💬 Ocultar/Mostrar Chat</button>
         
         <iframe 
@@ -57,10 +56,10 @@
     <!-- BARRA LATERAL (CHATS Y SUBS) -->
     <div class="barra-lateral" id="barraLateral">
         <div class="panel-control">
-            <!-- Botones de Suscripción -->
+            <!-- Botones de Suscripción Corregidos -->
             <div class="fila-subs">
                 <a href="https://www.twitch.tv/subs/esumemes" target="_blank" class="btn-sub sub-twitch">⭐ Sub Twitch</a>
-                <a href="https://kick.com/kimowo" target="_blank" class="btn-sub sub-kick">💚 Sub Kick</a>
+                <a href="https://kick.com/kimowo/subscribe" target="_blank" class="btn-sub sub-kick">💚 Sub Kick</a>
             </div>
             
             <!-- Botones para alternar entre chats -->
@@ -72,9 +71,9 @@
         
         <!-- Área de los Chats -->
         <div class="contenedor-chats">
-            <!-- Chat de Twitch -->
+            <!-- Chat de Twitch en modo oscuro -->
             <iframe id="chatTwitch" class="chat-iframe chat-visible"
-                src="https://www.twitch.tv/embed/esumemes/chat?parent=esumemes.github.io"
+                src="https://www.twitch.tv/embed/esumemes/chat?parent=esumemes.github.io&theme=dark"
                 height="100%" width="100%">
             </iframe>
             
@@ -87,7 +86,6 @@
     </div>
 
     <script>
-        // Función para cambiar entre el chat de Twitch y el de Kick
         function cambiarChat(plataforma) {
             const chatTwitch = document.getElementById('chatTwitch');
             const chatKick = document.getElementById('chatKick');
@@ -107,7 +105,7 @@
             }
         }
 
-        // Función para ocultar o mostrar los dos chats por completo
+        // Ocultar o mostrar barra de chats completa
         function toggleBarra() {
             const barra = document.getElementById('barraLateral');
             barra.classList.toggle('barra-oculta');
