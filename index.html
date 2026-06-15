@@ -36,8 +36,14 @@
         .btn-chat.activo-kick { background-color: #53fc18; color: black; }
         
         /* Contenedor de los iFrames del chat */
-        .contenedor-chats { flex: 1; position: relative; background-color: #0e0e10; }
-        .chat-iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; border: none; }
+        .contenedor-chats { flex: 1; position: relative; background-color: #0e0e10; overflow: hidden; }
+        
+        /* Ajuste especial para recortar la barra blanca superior de Twitch */
+        .wrapper-twitch { position: absolute; top: -50px; left: 0; width: 100%; height: calc(100% + 50px); display: none; }
+        .wrapper-visible { display: block; }
+        
+        .chat-iframe { width: 100%; height: 100%; border: none; }
+        .chat-kick-style { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; border: none; }
         .chat-visible { display: block; }
     </style>
 </head>
@@ -71,35 +77,35 @@
         
         <!-- Área de los Chats -->
         <div class="contenedor-chats">
-            <!-- Chat de Twitch con doble refuerzo oscuro (theme=dark y darkpopout) -->
-<iframe id="chatTwitch" class="chat-iframe chat-visible"
-                src="https://www.twitch.tv/popout/esumemes/chat?darkpopout"
-                height="100%" width="100%">
-            </iframe>
+            <!-- Contenedor recortado de Twitch para ocultar el encabezado blanco -->
+            <div id="wrapperTwitch" class="wrapper-twitch wrapper-visible">
+                <iframe class="chat-iframe"
+                    src="https://www.twitch.tv/popout/esumemes/chat?darkpopout">
+                </iframe>
+            </div>
             
             <!-- Chat de Kick -->
-            <iframe id="chatKick" class="chat-iframe"
-                src="https://kick.com/popout/kimowo/chat"
-                height="100%" width="100%">
+            <iframe id="chatKick" class="chat-kick-style"
+                src="https://kick.com/popout/kimowo/chat">
             </iframe>
         </div>
     </div>
 
     <script>
         function cambiarChat(plataforma) {
-            const chatTwitch = document.getElementById('chatTwitch');
+            const wrapperTwitch = document.getElementById('wrapperTwitch');
             const chatKick = document.getElementById('chatKick');
             const btnTwitch = document.getElementById('btnTabTwitch');
             const btnKick = document.getElementById('btnTabKick');
 
             if(plataforma === 'twitch') {
-                chatTwitch.classList.add('chat-visible');
+                wrapperTwitch.classList.add('wrapper-visible');
                 chatKick.classList.remove('chat-visible');
                 btnTwitch.classList.add('activo-twitch');
                 btnKick.classList.remove('activo-kick');
             } else if(plataforma === 'kick') {
                 chatKick.classList.add('chat-visible');
-                chatTwitch.classList.remove('chat-visible');
+                wrapperTwitch.classList.remove('wrapper-visible');
                 btnKick.classList.add('activo-kick');
                 btnTwitch.classList.remove('activo-twitch');
             }
