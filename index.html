@@ -5,40 +5,194 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stream en Vivo - Kimowo</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; background-color: #0e0e10; }
-        body { display: flex; height: 100vh; overflow: hidden; font-family: sans-serif; color: white; }
+        /* Corrección del selector universal: quitamos el color de fondo global forzado */
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body { 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
+            font-family: sans-serif; 
+            color: white; 
+            background-color: #0e0e10;
+        }
         
         /* Contenedor del video (Izquierda) */
-        .contenedor-video { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; }
-        iframe { border: none; width: 100%; height: 100%; }
+        .contenedor-video { 
+            flex: 1; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            position: relative; 
+            background-color: #000;
+        } 
+        .contenedor-video iframe { 
+            border: none; 
+            width: 100%; 
+            height: 100%; 
+        }
         
         /* Botón flotante para abrir/cerrar la barra de chats */
-        .btn-toggle-barra { position: absolute; top: 15px; right: 15px; z-index: 100; padding: 10px 15px; background-color: #232329; border: 1px solid #464649; border-radius: 5px; color: white; cursor: pointer; font-weight: bold; }
-        .btn-toggle-barra:hover { background-color: #313137; }
+        .btn-toggle-barra { 
+            position: absolute; 
+            top: 15px; 
+            right: 15px; 
+            z-index: 100; 
+            padding: 10px 15px; 
+            background-color: #232329; 
+            border: 1px solid #464649; 
+            border-radius: 5px; 
+            color: white; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
+        .btn-toggle-barra:hover { 
+            background-color: #313137; 
+        }
 
         /* Contenedor de la barra lateral (Derecha) */
-        .barra-lateral { width: 350px; height: 100%; display: flex; flex-direction: column; border-left: 1px solid #2f2f35; transition: width 0.3s ease; }
-        .barra-oculta { width: 0px; display: none; }
+        .barra-lateral { 
+            width: 350px; 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            border-left: 1px solid #2f2f35; 
+            transition: width 0.3s ease; 
+            background-color: #18181c;
+        }
+        .barra-oculta { 
+            width: 0px; 
+            display: none; 
+        }
         
         /* Zona de suscripciones y selección de chat */
-        .panel-control { background-color: #18181b; padding: 10px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #2f2f35; }
+        .panel-control { 
+            background-color: #1f1f23; 
+            padding: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            border-bottom: 1px solid #2f2f35; 
+        }
         
         /* Fila de botones de Suscripción */
-        .fila-subs { display: flex; gap: 8px; justify-content: center; }
-        .btn-sub { flex: 1; padding: 8px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; font-size: 13px; }
-        .sub-twitch { background-color: #9146ff; color: white; }
-        .sub-kick { background-color: #53fc18; color: black; }
+        .fila-subs { 
+            display: flex; 
+            gap: 8px; 
+            justify-content: center; 
+            background-color: transparent;
+        }
+        .btn-sub { 
+            flex: 1; 
+            padding: 8px; 
+            border: none; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            text-align: center; 
+            text-decoration: none; 
+            font-size: 13px; 
+        }
+        .sub-twitch { 
+            background-color: #9146ff; 
+            color: white; 
+        }
+        .sub-kick { 
+            background-color: #53fc18; 
+            color: black; 
+        }
 
         /* Fila de botones de pestañas de Chat */
-        .fila-chats { display: flex; gap: 8px; justify-content: center; }
-        .btn-chat { flex: 1; padding: 6px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: #adadb8; background-color: #26262c; }
-        .btn-chat.activo-twitch { background-color: #9146ff; color: white; }
-        .btn-chat.activo-kick { background-color: #53fc18; color: black; }
+        .fila-chats { 
+            display: flex; 
+            gap: 8px; 
+            justify-content: center; 
+            background-color: transparent;
+        }
+        .btn-chat { 
+            flex: 1; 
+            padding: 6px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            color: #adadb8; 
+            background-color: #26262c; 
+        }
+        .btn-chat.activo-twitch { 
+            background-color: #9146ff; 
+            color: white; 
+        }
+        .btn-chat.activo-kick { 
+            background-color: #53fc18; 
+            color: black; 
+        }
         
-        /* Contenedor de los iFrames del chat */
-        .contenedor-chats { flex: 1; position: relative; background-color: #0e0e10; }
-        .chat-iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; border: none; }
-        .chat-visible { display: block; }
+        /* Contenedor inteligente de los iFrames del chat */
+        .contenedor-chats { 
+            flex: 1; 
+            position: relative; 
+            background-color: #18181c; /* Color oficial del fondo oscuro de Twitch */
+        }
+        .chat-iframe { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            display: none; 
+            border: none; 
+            background-color: #18181c;
+        }
+        .chat-visible { 
+            display: block; 
+        }
+
+        /* Estilo del botón de ayuda interno para el chat */
+        .header-soporte-chat {
+            background-color: #18181c;
+            padding: 5px 10px;
+            display: flex;
+            justify-content: flex-end;
+            border-bottom: 1px solid #2f2f35;
+        }
+        .btn-ayuda-oscuro {
+            background-color: transparent;
+            border: 1px solid #9146ff;
+            color: #9146ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .btn-ayuda-oscuro:hover {
+            background-color: #9146ff;
+            color: white;
+        }
+
+        /* Popover flotante de asistencia */
+        .guia-oscuro-popover {
+            display: none;
+            position: absolute;
+            top: 40px;
+            left: 5%;
+            width: 90%;
+            background-color: #0e0e10;
+            color: #adadb8;
+            border: 1px solid #9146ff;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+        }
+        .guia-oscuro-popover p { margin: 0; line-height: 1.4; background-color: transparent; }
+        .guia-oscuro-popover strong { color: white; background-color: transparent; }
     </style>
 </head>
 <body>
@@ -71,10 +225,21 @@
         
         <!-- Área de los Chats Interactivos -->
         <div class="contenedor-chats">
+            
+            <!-- Sub-Header de asistencia exclusivo para cuando esté activo Twitch -->
+            <div id="headerSoporte" class="header-soporte-chat">
+                <button class="btn-ayuda-oscuro" onclick="toggleGuia()">¿Se ve blanco? ⚙️</button>
+            </div>
+
+            <!-- Mensaje de guía flotante -->
+            <div id="guia-oscuro-msg" class="guia-oscuro-popover">
+                <p><strong>Para ponerlo negro:</strong> Haz clic en la tuerca <strong>⚙️ (Configuración)</strong> abajo a la derecha dentro del chat y marca <strong>"Tema oscuro"</strong>.</p>
+            </div>
+
             <!-- Chat Oficial Forzado en Modo Oscuro Interactivo -->
             <iframe id="chatTwitch" class="chat-iframe chat-visible"
                 src="https://www.twitch.tv/embed/esumemes/chat?parent=esumemes.github.io&theme=dark"
-                height="100%" width="100%">
+                height="93%" width="100%">
             </iframe>
             
             <!-- Chat de Kick -->
@@ -91,23 +256,40 @@
             const chatKick = document.getElementById('chatKick');
             const btnTwitch = document.getElementById('btnTabTwitch');
             const btnKick = document.getElementById('btnTabKick');
+            const headerSoporte = document.getElementById('headerSoporte');
+            const msgGuia = document.getElementById('guia-oscuro-msg');
 
             if(plataforma === 'twitch') {
                 chatTwitch.classList.add('chat-visible');
                 chatKick.classList.remove('chat-visible');
                 btnTwitch.classList.add('activo-twitch');
                 btnKick.classList.remove('activo-kick');
+                headerSoporte.style.display = 'flex'; // Muestra la barra de ayuda de Twitch
             } else if(plataforma === 'kick') {
                 chatKick.classList.add('chat-visible');
                 chatTwitch.classList.remove('chat-visible');
                 btnKick.classList.add('activo-kick');
                 btnTwitch.classList.remove('activo-twitch');
+                headerSoporte.style.display = 'none'; // Oculta la barra de ayuda en Kick
+                msgGuia.style.display = 'none';
             }
         }
 
         function toggleBarra() {
             const barra = document.getElementById('barraLateral');
             barra.classList.toggle('barra-oculta');
+        }
+
+        function toggleGuia() {
+            var msg = document.getElementById("guia-oscuro-msg");
+            if (msg.style.display === "block") {
+                msg.style.display = "none";
+            } else {
+                msg.style.display = "block";
+                setTimeout(function() {
+                    msg.style.display = "none";
+                }, 7000);
+            }
         }
     </script>
 
