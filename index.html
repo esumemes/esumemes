@@ -2,100 +2,183 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Stream en Vivo - Kimowo</title>
+
+    <script>
+        // --- DETECCIÓN DE DISPOSITIVO (no de ancho de pantalla) ---
+        // Se ejecuta antes de pintar la página para que no haya "parpadeo" de layout.
+        // Añade la clase "vista-pc" o "vista-movil" al <html>, y todo el CSS de abajo
+        // se organiza sobre esas dos clases en vez de usar @media (max-width).
+        (function () {
+            var ua = navigator.userAgent || '';
+            var esMobilPorUA = /Android|iPhone|iPod|iPad|IEMobile|Opera Mini|Mobile|Windows Phone|BlackBerry/i.test(ua);
+            // iPadOS moderno se identifica como "Macintosh" en el userAgent, así que
+            // lo detectamos aparte revisando si tiene pantalla táctil real.
+            var esTabletComoMac = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+            var esMobil = esMobilPorUA || esTabletComoMac;
+            document.documentElement.classList.add(esMobil ? 'vista-movil' : 'vista-pc');
+        })();
+    </script>
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; background-color: #0e0e10; }
-        body { display: flex; height: 100vh; overflow: hidden; font-family: sans-serif; color: white; }
-        
-        /* Contenedor del video (Izquierda) */
-        .contenedor-video { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; }
-        iframe { border: none; width: 100%; height: 100%; }
-        
-        /* Botón flotante para abrir/cerrar la barra de chats por completo */
-        .btn-toggle-barra { position: absolute; top: 15px; right: 15px; z-index: 100; padding: 10px 15px; background-color: #232329; border: 1px solid #464649; border-radius: 5px; color: white; cursor: pointer; font-weight: bold; }
-        .btn-toggle-barra:hover { background-color: #313137; }
+        :root {
+            --bg: #0e0e10;
+            --panel-bg: #18181b;
+            --border: #2f2f35;
+            --border-soft: #464649;
+            --twitch: #9146ff;
+            --kick: #53fc18;
+            --text: #ffffff;
+            --text-dim: #adadb8;
+            --chat-btn-bg: #26262c;
+            --overlay-bg: rgba(14, 14, 16, 0.78);
+            --accent: #f2b90c;
+        }
 
-        /* Contenedor de la barra lateral (Derecha) */
-        .barra-lateral { width: 350px; height: 100%; display: flex; flex-direction: column; border-left: 1px solid #2f2f35; transition: width 0.3s ease; }
-        .barra-oculta { width: 0px; display: none; }
-        
-        /* Zona de suscripciones y selección de chat */
-        .panel-control { background-color: #18181b; padding: 10px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #2f2f35; }
-        
-        /* Fila de botones de Suscripción */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { background-color: var(--bg); }
+        button, a { font-family: inherit; }
+        button:focus-visible, a:focus-visible { outline: 2px solid var(--kick); outline-offset: 2px; }
+
+        body {
+            display: flex;
+            height: 100vh;
+            height: 100dvh; /* usa la altura real disponible en móviles */
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+        }
+        html.vista-movil body { flex-direction: column; }
+
+        /* ============ CONTENEDOR DE VIDEO ============ */
+        .contenedor-video {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background-color: var(--bg);
+        }
+        html.vista-movil .contenedor-video {
+            flex: 0 0 auto;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            max-height: 45dvh;
+        }
+        /* Si en móvil se oculta el chat, el video crece para llenar toda la pantalla
+           (útil para ver "en grande" sin necesidad de girar el celular) */
+        html.vista-movil body:has(.barra-lateral.barra-oculta) .contenedor-video {
+            flex: 1;
+            max-height: none;
+            aspect-ratio: auto;
+        }
+
+        iframe { border: none; width: 100%; height: 100%; display: block; }
+
+        /* Controles propios sobre el video, solo iconos: así no tapan/estorban
+           la vista del directo. Cada uno tiene "title"/"aria-label" para que
+           siga siendo accesible aunque no muestre texto. */
+        .controles-superiores {
+            position: absolute; bottom: 12px; left: 12px; z-index: 100;
+            display: flex; gap: 8px;
+        }
+        .btn-icono {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background-color: var(--overlay-bg); border: 1px solid var(--border-soft);
+            color: var(--text); cursor: pointer; font-size: 18px; line-height: 1;
+            backdrop-filter: blur(4px);
+        }
+        .btn-icono:hover { background-color: rgba(35, 35, 41, 0.92); }
+        .btn-icono.sonido-activo { border-color: var(--kick); color: var(--kick); }
+        html.vista-movil .btn-icono { width: 44px; height: 44px; font-size: 20px; }
+
+        /* ============ BARRA LATERAL (CHATS Y SUBS) ============ */
+        .barra-lateral {
+            width: 350px; height: 100%; display: flex; flex-direction: column;
+            border-left: 1px solid var(--border); transition: width 0.3s ease;
+        }
+        html.vista-movil .barra-lateral {
+            width: 100% !important; flex: 1; height: auto;
+            border-left: none; border-top: 1px solid var(--border);
+        }
+        .barra-oculta { width: 0px !important; display: none; }
+        @media (prefers-reduced-motion: reduce) { .barra-lateral { transition: none; } }
+
+        .panel-control {
+            background-color: var(--panel-bg); padding: 10px;
+            display: flex; flex-direction: column; gap: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
         .fila-subs { display: flex; gap: 8px; justify-content: center; }
-        .btn-sub { flex: 1; padding: 8px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; font-size: 13px; }
-        .sub-twitch { background-color: #9146ff; color: white; }
-        .sub-kick { background-color: #53fc18; color: black; }
+        .btn-horario {
+            flex: 1; padding: 9px; border: none; border-radius: 4px;
+            font-weight: 700; cursor: pointer; text-align: center;
+            text-decoration: none; font-size: 13px;
+            background-color: var(--accent); color: #000;
+        }
+        .btn-horario:hover { filter: brightness(1.08); }
+        .btn-discord { background-color: #5865f2; color: #ffffff; }
 
-        /* Fila de botones de pestañas de Chat */
         .fila-chats { display: flex; gap: 8px; justify-content: center; }
-        .btn-chat { flex: 1; padding: 6px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: #adadb8; background-color: #26262c; }
-        .btn-chat.activo-twitch { background-color: #9146ff; color: white; }
-        .btn-chat.activo-kick { background-color: #53fc18; color: black; }
-        
-        /* Contenedor de los iFrames del chat */
-        .contenedor-chats { flex: 1; position: relative; background-color: #0e0e10; }
+        .btn-chat {
+            flex: 1; padding: 6px; border: none; border-radius: 4px;
+            cursor: pointer; font-weight: 700; color: var(--text-dim);
+            background-color: var(--chat-btn-bg); font-size: 13px;
+        }
+        .btn-chat.activo-twitch { background-color: var(--twitch); color: white; }
+        .btn-chat.activo-kick { background-color: var(--kick); color: black; }
+
+        html.vista-movil .btn-horario,
+        html.vista-movil .btn-chat { padding: 12px 8px; font-size: 14px; min-height: 44px; }
+
+        .contenedor-chats { flex: 1; position: relative; background-color: var(--bg); }
         .chat-iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; border: none; }
         .chat-visible { display: block; }
-@media (max-width: 768px) {
-        body { 
-            flex-direction: column; 
-        }
-        
-        /* Video al mínimo necesario (25%) */
-        .contenedor-video { 
-            flex: 0 0 25vh; 
-        }
-        
-        /* Chat ocupando la mayor parte (75%) */
-        .barra-lateral { 
-            width: 100% !important; 
-            height: 75vh; 
-            border-left: none;
-            border-top: 1px solid #2f2f35;
-        }
-    }
     </style>
 </head>
 <body>
 
     <!-- REPRODUCTOR DE VIDEO (KICK) -->
-    <div class="contenedor-video">
-        <button class="btn-toggle-barra" onclick="toggleBarra()">💬 Ocultar/Mostrar Chat</button>
-        
-        <iframe 
-            src="https://player.kick.com/kimowo" 
+    <div class="contenedor-video" id="contenedorVideo">
+        <iframe
+            id="videoKick"
+            src="https://player.kick.com/kimowo?autoplay=true&muted=true"
+            allow="autoplay; fullscreen; picture-in-picture"
             allowfullscreen="true">
         </iframe>
+
+        <!-- Solo iconos: nada de texto tapando el directo. "title" mantiene
+             el tooltip al pasar el mouse y la accesibilidad para lectores de pantalla -->
+        <div class="controles-superiores">
+            <button id="btnSonido" class="btn-icono" onclick="toggleSonidoKick()" title="Activar sonido" aria-label="Activar sonido">🔇</button>
+            <button id="btnPantalla" class="btn-icono" onclick="toggleFullscreenVideo()" title="Pantalla completa" aria-label="Pantalla completa">⛶</button>
+            <button id="btnToggleChat" class="btn-icono" onclick="toggleBarra()" title="Ocultar/Mostrar chat" aria-label="Ocultar o mostrar el chat">💬</button>
+        </div>
     </div>
 
     <!-- BARRA LATERAL (CHATS Y SUBS) -->
     <div class="barra-lateral" id="barraLateral">
         <div class="panel-control">
-            <!-- Botones de Suscripción Corregidos -->
             <div class="fila-subs">
-                <a href="https://www.twitch.tv/subs/esumemes" target="_blank" class="btn-sub sub-twitch">⭐ Sub Twitch</a>
-                <a href="https://kick.com/kimowo/subscribe" target="_blank" class="btn-sub sub-kick">💚 Sub Kick</a>
+                <a href="https://canva.link/uqvpyb6dwtm2fwt" target="_blank" rel="noopener" class="btn-horario">Horario</a>
+                <a href="https://discord.gg/z2fMphP6UU" target="_blank" rel="noopener" class="btn-horario btn-discord">Discord</a>
             </div>
-            
-            <!-- Botones para alternar entre chats -->
+
             <div class="fila-chats">
                 <button id="btnTabTwitch" class="btn-chat activo-twitch" onclick="cambiarChat('twitch')">Twitch Chat</button>
                 <button id="btnTabKick" class="btn-chat" onclick="cambiarChat('kick')">Kick Chat</button>
             </div>
         </div>
-        
-        <!-- Área de los Chats -->
+
         <div class="contenedor-chats">
-            <!-- Chat de Twitch en modo oscuro -->
             <iframe id="chatTwitch" class="chat-iframe chat-visible"
                 src="https://www.twitch.tv/embed/esumemes/chat?parent=esumemes.github.io&darkpopout=1"
                 height="100%" width="100%">
             </iframe>
-            
-            <!-- Chat de Kick -->
+
             <iframe id="chatKick" class="chat-iframe"
                 src="https://kick.com/popout/kimowo/chat"
                 height="100%" width="100%">
@@ -110,12 +193,12 @@
             const btnTwitch = document.getElementById('btnTabTwitch');
             const btnKick = document.getElementById('btnTabKick');
 
-            if(plataforma === 'twitch') {
+            if (plataforma === 'twitch') {
                 chatTwitch.classList.add('chat-visible');
                 chatKick.classList.remove('chat-visible');
                 btnTwitch.classList.add('activo-twitch');
                 btnKick.classList.remove('activo-kick');
-            } else if(plataforma === 'kick') {
+            } else if (plataforma === 'kick') {
                 chatKick.classList.add('chat-visible');
                 chatTwitch.classList.remove('chat-visible');
                 btnKick.classList.add('activo-kick');
@@ -123,11 +206,63 @@
             }
         }
 
-        // Ocultar o mostrar barra de chats completa
         function toggleBarra() {
             const barra = document.getElementById('barraLateral');
             barra.classList.toggle('barra-oculta');
         }
+
+        // --- CONTROL DE SONIDO DEL VIDEO DE KICK ---
+        // Kick no ofrece una API de JavaScript pública para cambiar el mute en
+        // caliente: solo se puede indicar por parámetro en la URL (?muted=true/false).
+        // Por eso este botón recarga el iframe con el parámetro actualizado.
+        // Es una recarga rápida del stream en vivo, no afecta el directo real.
+        let kickSilenciado = true;
+
+        function construirSrcKick(silenciado) {
+            return 'https://player.kick.com/kimowo?autoplay=true&muted=' + (silenciado ? 'true' : 'false');
+        }
+
+        function toggleSonidoKick() {
+            kickSilenciado = !kickSilenciado;
+            document.getElementById('videoKick').src = construirSrcKick(kickSilenciado);
+            actualizarBotonSonido();
+        }
+
+        function actualizarBotonSonido() {
+            const btn = document.getElementById('btnSonido');
+            if (kickSilenciado) {
+                btn.textContent = '🔇';
+                btn.title = 'Activar sonido';
+                btn.setAttribute('aria-label', 'Activar sonido');
+                btn.classList.remove('sonido-activo');
+            } else {
+                btn.textContent = '🔊';
+                btn.title = 'Silenciar';
+                btn.setAttribute('aria-label', 'Silenciar');
+                btn.classList.add('sonido-activo');
+            }
+        }
+
+        // --- PANTALLA COMPLETA (opcional, si el navegador lo permite) ---
+        function toggleFullscreenVideo() {
+            const contenedor = document.getElementById('contenedorVideo');
+            const enFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+            if (!enFullscreen) {
+                if (contenedor.requestFullscreen) contenedor.requestFullscreen();
+                else if (contenedor.webkitRequestFullscreen) contenedor.webkitRequestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const btnPantalla = document.getElementById('btnPantalla');
+            const soportaFullscreen = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+            if (!soportaFullscreen && btnPantalla) {
+                btnPantalla.style.display = 'none';
+            }
+        });
     </script>
 
 </body>
